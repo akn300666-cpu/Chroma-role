@@ -1,0 +1,5 @@
+{
+  "name": "Copy of Chroma Roleplay",
+  "description": "A multi-character AI roleplaying application with dynamic scenario creation, configurable chat parameters, and in-chat image generation via a Gradio endpoint.",
+  "requestFramePermissions": []
+}
