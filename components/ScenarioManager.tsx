@@ -41,6 +41,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ scenarios, setScenari
       language: 'English',
       memory: '',
       backgroundImageUrl: '',
+      backgroundOpacity: 15,
+      backgroundBlur: 10,
       userPersona: '',
       gradioUrl: '',
     });
@@ -51,41 +53,47 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ scenarios, setScenari
   }
 
   return (
-    <div className="p-4 md:p-6 h-full overflow-y-auto bg-gray-950">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-white">Scenarios</h2>
-        <button onClick={handleAddNew} className="flex items-center bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg transition">
-          <PlusIcon className="w-5 h-5 mr-2"/>
-          New Scenario
+    <div className="p-4 h-full overflow-y-auto bg-black pb-24">
+      <div className="flex justify-between items-center mb-10 pt-[env(safe-area-inset-top)]">
+        <div>
+           <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Worlds</h2>
+           <p className="text-zinc-500 text-[10px] tracking-[0.3em] mt-1">SCENARIO ARCHIVE</p>
+        </div>
+        <button onClick={handleAddNew} className="bg-teal-600 active:scale-95 text-white font-black py-3 px-6 rounded-2xl transition shadow-xl shadow-teal-900/20 text-[10px] tracking-widest uppercase">
+          <PlusIcon className="w-5 h-5"/>
         </button>
       </div>
+
       <div className="space-y-4">
         {scenarios.map(scen => (
-          <div key={scen.id} className="bg-gray-900 rounded-lg shadow-lg p-5 border border-gray-800">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="text-xl font-semibold text-white">{scen.name}</h3>
-                <p className="text-gray-400 mt-2">{scen.description}</p>
-              </div>
-              {scen.gradioUrl && (
-                <span className="bg-teal-600/20 text-teal-400 text-[10px] font-bold px-2 py-1 rounded uppercase border border-teal-500/20">Kobold / OpenAI Engine</span>
-              )}
-            </div>
-            <div className="mt-4">
-              <h4 className="font-semibold text-gray-300 text-sm">Cast:</h4>
-              <div className="flex items-center gap-3 mt-2">
-                {characters.filter(c => scen.characterIds.includes(c.id)).map(char => {
-                   const isVideo = char.avatar.endsWith('.mp4') || char.avatar.endsWith('.webm');
-                   if (isVideo) {
-                       return <video key={char.id} src={char.avatar} title={char.name} className="w-10 h-10 rounded-full border-2 border-gray-800 object-cover bg-black" autoPlay loop muted playsInline />;
-                   }
-                   return <img key={char.id} src={char.avatar} alt={char.name} title={char.name} className="w-10 h-10 rounded-full border-2 border-gray-800 object-cover"/>;
-                })}
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 mt-4">
-              <button onClick={() => setEditingScenario(scen)} className="bg-gray-800 hover:bg-teal-600 text-white font-semibold py-2 px-4 rounded-lg transition">Engine Config</button>
-              <button onClick={() => onSelectScenario(scen.id)} className="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg transition">Enter Chat</button>
+          <div key={scen.id} className="bg-zinc-900/50 rounded-3xl p-6 border border-white/5 shadow-2xl overflow-hidden relative group">
+             {scen.backgroundImageUrl && (
+                <div className="absolute inset-0 opacity-10 pointer-events-none">
+                    <img src={scen.backgroundImageUrl} alt="BG" className="w-full h-full object-cover scale-110 blur-sm" />
+                </div>
+             )}
+            <div className="relative z-10">
+                <div className="flex justify-between items-start">
+                  <div className="min-w-0">
+                    <h3 className="text-xl font-black text-white uppercase tracking-tight truncate">{scen.name}</h3>
+                    <p className="text-zinc-500 mt-2 text-xs line-clamp-2 font-light">{scen.description}</p>
+                  </div>
+                </div>
+                <div className="mt-6">
+                  <div className="flex items-center -space-x-3">
+                    {characters.filter(c => scen.characterIds.includes(c.id)).map(char => {
+                       const isVideo = char.avatar.endsWith('.mp4') || char.avatar.endsWith('.webm');
+                       if (isVideo) {
+                           return <video key={char.id} src={char.avatar} title={char.name} className="w-10 h-10 rounded-full border-2 border-black object-cover bg-black" autoPlay loop muted playsInline />;
+                       }
+                       return <img key={char.id} src={char.avatar} alt={char.name} title={char.name} className="w-10 h-10 rounded-full border-2 border-black object-cover"/>;
+                    })}
+                  </div>
+                </div>
+                <div className="flex gap-3 mt-8">
+                  <button onClick={() => setEditingScenario(scen)} className="flex-1 bg-white/5 hover:bg-white/10 text-zinc-400 font-black py-3.5 rounded-2xl transition border border-white/5 text-[10px] tracking-widest uppercase">Config</button>
+                  <button onClick={() => onSelectScenario(scen.id)} className="flex-1 bg-teal-600 hover:bg-teal-500 text-white font-black py-3.5 rounded-2xl transition shadow-xl shadow-teal-900/30 text-[10px] tracking-widest uppercase">Enter</button>
+                </div>
             </div>
           </div>
         ))}
@@ -112,6 +120,11 @@ const ScenarioForm: React.FC<{ scenario: Scenario, allCharacters: Character[], o
             }
         }));
     };
+
+    const handleVisualChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: parseFloat(value) }));
+    };
     
     const handleCharacterToggle = (charId: string) => {
         setFormData(prev => {
@@ -128,93 +141,66 @@ const ScenarioForm: React.FC<{ scenario: Scenario, allCharacters: Character[], o
     };
 
     return (
-        <div className="p-4 md:p-6 h-full overflow-y-auto bg-gray-950">
-            <h2 className="text-3xl font-bold text-white mb-6 uppercase tracking-tighter">{!scenario.name ? 'Manifest Scenario' : `Config ${scenario.name}`}</h2>
-            <form onSubmit={handleSubmit} className="space-y-6 pb-12">
-                <InputField label="Scenario Name" name="name" value={formData.name} onChange={handleChange} required />
-                <TextAreaField label="Description Hook" name="description" value={formData.description} onChange={handleChange} rows={2} required />
+        <div className="p-4 h-full overflow-y-auto bg-black pb-24 custom-scrollbar pt-[env(safe-area-inset-top)]">
+            <div className="flex items-center gap-4 mb-10">
+                <button onClick={onCancel} className="p-2 text-zinc-500 hover:text-white transition rounded-full hover:bg-white/5 active:scale-90">
+                    <PlusIcon className="w-8 h-8 rotate-45" />
+                </button>
+                <h2 className="text-3xl font-black text-white uppercase tracking-tighter">New World</h2>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-8">
+                <InputField label="World Name" name="name" value={formData.name} onChange={handleChange} required />
+                <TextAreaField label="Premise Hook" name="description" value={formData.description} onChange={handleChange} rows={2} required />
                 
-                <div className="p-4 bg-gray-900 rounded-lg border border-gray-800">
-                    <h3 className="text-xl font-semibold mb-4 text-teal-400">Kobold / OpenAI Engine</h3>
+                <div className="p-5 bg-zinc-900/50 rounded-3xl border border-white/5">
+                    <h3 className="text-sm font-black text-teal-500 uppercase tracking-widest mb-6">Engine Link</h3>
                     <InputField 
-                        label="API Base URL (Kaggle/Local Tunnel)" 
+                        label="Endpoint URL" 
                         name="gradioUrl" 
                         value={formData.gradioUrl || ''} 
                         onChange={handleChange} 
                         placeholder="https://xxxxx.loca.lt/v1"
                     />
-                    <p className="text-[10px] text-gray-500 mt-2 uppercase tracking-widest">Ensure URL ends with /v1 for proper connection.</p>
                 </div>
 
-                <div className="p-4 bg-gray-900 rounded-lg border border-gray-800">
-                    <h3 className="text-xl font-semibold mb-4 text-teal-400">User Identity</h3>
-                    <TextAreaField 
-                        label="Your Persona (Who are you in this world?)" 
-                        name="userPersona" 
-                        value={formData.userPersona || ''} 
-                        onChange={handleChange} 
-                        rows={4} 
-                    />
+                <div className="p-5 bg-zinc-900/50 rounded-3xl border border-white/5">
+                    <h3 className="text-sm font-black text-teal-500 uppercase tracking-widest mb-6">Visual Ambience</h3>
+                    <div className="space-y-6">
+                        <InputField label="Background Image URL" name="backgroundImageUrl" value={formData.backgroundImageUrl || ''} onChange={handleChange} />
+                        <Slider label="Background Opacity" name="backgroundOpacity" value={formData.backgroundOpacity ?? 15} min={0} max={100} step={1} onChange={handleVisualChange} unit="%" />
+                        <Slider label="Background Blur" name="backgroundBlur" value={formData.backgroundBlur ?? 10} min={0} max={40} step={1} onChange={handleVisualChange} unit="px" />
+                    </div>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Select Characters</label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-4 bg-gray-900 rounded-lg border border-gray-800">
+                    <label className="block text-[10px] font-black uppercase text-zinc-500 mb-4 tracking-widest ml-1">The Cast</label>
+                    <div className="grid grid-cols-3 gap-3 p-4 bg-zinc-900/30 rounded-3xl border border-white/5">
                         {allCharacters.map(char => {
-                            const isVideo = char.avatar.endsWith('.mp4') || char.avatar.endsWith('.webm');
+                            const isSelected = formData.characterIds.includes(char.id);
                             return (
-                                <div key={char.id} onClick={() => handleCharacterToggle(char.id)} className={`cursor-pointer p-2 rounded-lg text-center transition ${formData.characterIds.includes(char.id) ? 'bg-teal-600' : 'bg-gray-800 hover:bg-gray-700'}`}>
-                                    {isVideo ? (
-                                        <video src={char.avatar} className="w-16 h-16 rounded-full mx-auto mb-2 object-cover bg-black" autoPlay loop muted playsInline />
-                                    ) : (
-                                        <img src={char.avatar} alt={char.name} className="w-16 h-16 rounded-full mx-auto mb-2 object-cover"/>
-                                    )}
-                                    <span className="text-sm font-medium">{char.name}</span>
+                                <div key={char.id} onClick={() => handleCharacterToggle(char.id)} className={`cursor-pointer p-3 rounded-2xl text-center transition-all active:scale-95 ${isSelected ? 'bg-teal-600 shadow-lg shadow-teal-900/40' : 'bg-black/40'}`}>
+                                    <img src={char.avatar} alt={char.name} className="w-12 h-12 rounded-full mx-auto mb-2 object-cover border-2 border-black shadow-md"/>
+                                    <span className="text-[10px] font-black uppercase tracking-tight text-white block truncate">{char.name}</span>
                                 </div>
                             );
                         })}
                     </div>
                 </div>
 
-                <div className="p-4 bg-gray-900 rounded-lg border border-gray-800">
-                    <h3 className="text-xl font-semibold mb-4 text-teal-400">World & Parameters</h3>
-                    <InputField 
-                        label="Background Image/Video URL" 
-                        name="backgroundImageUrl" 
-                        value={formData.backgroundImageUrl || ''} 
-                        onChange={handleChange} 
-                        placeholder="Visual mood link..." 
-                    />
-                     <div className="mt-4">
-                        <TextAreaField 
-                            label="Initial Story Memory" 
-                            name="memory" 
-                            value={formData.memory || ''} 
-                            onChange={handleChange} 
-                            rows={3} 
-                        />
-                     </div>
-                </div>
-
-                <div className="p-4 bg-gray-900 rounded-lg border border-gray-800">
-                    <h3 className="text-xl font-semibold mb-4 text-teal-400">Core Scenario Instruction</h3>
+                <div className="p-5 bg-zinc-900/50 rounded-3xl border border-white/5">
+                    <h3 className="text-sm font-black text-teal-500 uppercase tracking-widest mb-6">Core Directives</h3>
                     <TextAreaField label="Setting Instruction" name="systemInstruction" value={formData.systemInstruction} onChange={handleChange} rows={4} />
-                    <div className="mt-6 space-y-6">
-                        <h4 className="text-sm font-bold uppercase text-gray-400 tracking-widest">Neural Tuning</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                          <Slider label="Temperature" name="temperature" value={formData.chatParameters.temperature} min={0} max={2} step={0.05} onChange={handleParamChange} />
-                          <Slider label="Top-P" name="topP" value={formData.chatParameters.topP} min={0} max={1} step={0.05} onChange={handleParamChange} />
-                          <Slider label="Top-K" name="topK" value={formData.chatParameters.topK} min={1} max={100} step={1} onChange={handleParamChange} />
-                          <Slider label="Repetition Penalty" name="repetitionPenalty" value={formData.chatParameters.repetitionPenalty} min={1} max={2} step={0.05} onChange={handleParamChange} />
-                          <Slider label="Max Tokens" name="maxTokens" value={formData.chatParameters.maxTokens} min={128} max={4096} step={128} onChange={handleParamChange} />
-                          <Slider label="Context Size" name="contextSize" value={formData.chatParameters.contextSize} min={1024} max={16384} step={1024} onChange={handleParamChange} />
-                        </div>
+                    <div className="mt-8 space-y-7">
+                        <h4 className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.3em]">Neural Tuning</h4>
+                        <Slider label="Temperature" name="temperature" value={formData.chatParameters.temperature} min={0} max={2} step={0.05} onChange={handleParamChange} />
+                        <Slider label="Max Tokens" name="maxTokens" value={formData.chatParameters.maxTokens} min={128} max={4096} step={128} onChange={handleParamChange} />
                     </div>
                 </div>
 
-                <div className="flex justify-end gap-4 pt-4">
-                    <button type="button" onClick={onCancel} className="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded-lg transition">Discard</button>
-                    <button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg transition shadow-xl shadow-teal-900/40">Save Manifest</button>
+                <div className="flex gap-4 pt-4 mb-20">
+                    <button type="button" onClick={onCancel} className="flex-1 bg-white/5 text-zinc-400 font-black py-5 rounded-3xl text-[10px] tracking-widest uppercase">Discard</button>
+                    <button type="submit" className="flex-1 bg-teal-600 text-white font-black py-5 rounded-3xl text-[10px] tracking-widest uppercase shadow-2xl shadow-teal-900/40">Manifest</button>
                 </div>
             </form>
         </div>
@@ -222,8 +208,8 @@ const ScenarioForm: React.FC<{ scenario: Scenario, allCharacters: Character[], o
 };
 
 const InputField: React.FC<{label: string, name: string, value: string, onChange: any, required?: boolean, placeholder?: string, type?: string}> = ({ label, name, value, onChange, required, placeholder, type="text" }) => (
-    <div>
-        <label htmlFor={name} className="block text-sm font-medium text-gray-300 mb-1">{label}</label>
+    <div className="w-full">
+        <label htmlFor={name} className="block text-[10px] font-black uppercase text-zinc-500 mb-2 tracking-widest ml-1">{label}</label>
         <input
             type={type}
             id={name}
@@ -232,14 +218,14 @@ const InputField: React.FC<{label: string, name: string, value: string, onChange
             onChange={onChange}
             required={required}
             placeholder={placeholder}
-            className="w-full bg-gray-950 border border-gray-800 text-white rounded-lg px-3 py-2 outline-none focus:border-teal-500 transition"
+            className="w-full bg-black/40 border border-white/5 text-white rounded-2xl px-5 py-4 outline-none focus:border-teal-500 transition shadow-inner text-sm"
         />
     </div>
 );
 
 const TextAreaField: React.FC<{label: string, name: string, value: string, onChange: any, required?: boolean, rows?: number, placeholder?: string}> = ({ label, name, value, onChange, required, rows=3, placeholder }) => (
-    <div>
-        <label htmlFor={name} className="block text-sm font-medium text-gray-300 mb-1">{label}</label>
+    <div className="w-full">
+        <label htmlFor={name} className="block text-[10px] font-black uppercase text-zinc-500 mb-2 tracking-widest ml-1">{label}</label>
         <textarea
             id={name}
             name={name}
@@ -248,18 +234,18 @@ const TextAreaField: React.FC<{label: string, name: string, value: string, onCha
             required={required}
             rows={rows}
             placeholder={placeholder}
-            className="w-full bg-gray-950 border border-gray-800 text-white rounded-lg px-3 py-2 outline-none focus:border-teal-500 transition custom-scrollbar"
+            className="w-full bg-black/40 border border-white/5 text-white rounded-2xl px-5 py-4 outline-none focus:border-teal-500 transition custom-scrollbar shadow-inner text-sm"
         />
     </div>
 );
 
-const Slider: React.FC<{label: string, name: string, value: number, min: number, max: number, step: number, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;}> = ({ label, name, value, min, max, step, onChange }) => (
-    <div>
-        <label htmlFor={name} className="flex justify-between items-center text-sm font-medium text-gray-300 mb-1">
+const Slider: React.FC<{label: string, name: string, value: number, min: number, max: number, step: number, unit?: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;}> = ({ label, name, value, min, max, step, unit = "", onChange }) => (
+    <div className="w-full">
+        <label htmlFor={name} className="flex justify-between items-center text-[10px] font-black uppercase text-zinc-500 mb-3 tracking-widest ml-1">
             <span>{label}</span>
-            <span className="font-bold text-teal-400">{value}</span>
+            <span className="font-bold text-teal-500">{value}{unit}</span>
         </label>
-        <input type="range" id={name} name={name} min={min} max={max} step={step} value={value} onChange={onChange} className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-teal-500" />
+        <input type="range" id={name} name={name} min={min} max={max} step={step} value={value} onChange={onChange} className="w-full h-1.5 bg-black rounded-lg appearance-none cursor-pointer accent-teal-500" />
     </div>
 );
 

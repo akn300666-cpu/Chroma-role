@@ -29,6 +29,8 @@ export interface Scenario {
   memory?: string; // This is the Tier 2 Macro-Memory
   intermediateMemories?: string[]; // This stores the Tier 1 Micro-Summaries (max 10)
   backgroundImageUrl?: string;
+  backgroundOpacity?: number;
+  backgroundBlur?: number;
   userPersona?: string;
   gradioUrl?: string; // Used for local text model connection
 }

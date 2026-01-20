@@ -14,27 +14,29 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
 
   return ReactDOM.createPortal(
     <div 
-      className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50 p-4"
+      className="fixed inset-0 bg-black/95 backdrop-blur-xl flex justify-center items-end sm:items-center z-[100]"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-labelledby="modal-title"
     >
       <div 
-        className="bg-gray-950 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col"
-        onClick={e => e.stopPropagation()} // Prevent closing when clicking inside the modal
+        className="bg-gray-950 w-full h-[92vh] sm:h-auto sm:max-w-2xl sm:rounded-3xl flex flex-col border-t sm:border border-white/10 rounded-t-[2.5rem] overflow-hidden shadow-[0_-10px_40px_rgba(0,0,0,0.5)]"
+        onClick={e => e.stopPropagation()}
       >
-        <header className="flex justify-between items-center p-4 border-b border-gray-900">
-          <h2 id="modal-title" className="text-xl font-bold text-white">{title}</h2>
+        <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mt-3 mb-1 sm:hidden" />
+        
+        <header className="flex justify-between items-center px-6 py-5 border-b border-white/5 shrink-0">
+          <h2 className="text-sm font-black text-white uppercase tracking-[0.2em]">{title}</h2>
           <button 
             onClick={onClose} 
-            className="text-gray-400 hover:text-white text-2xl leading-none font-bold"
-            aria-label="Close modal"
+            className="text-zinc-500 hover:text-white transition-colors"
+            aria-label="Close"
           >
-            &times;
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </header>
-        <div className="p-6 overflow-y-auto">
+        
+        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar pb-32">
           {children}
         </div>
       </div>

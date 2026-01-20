@@ -2,7 +2,6 @@
 import React, { useState, useCallback } from 'react';
 import type { Character, Scenario, Message } from './types';
 import { View } from './types';
-import Sidebar from './components/Sidebar';
 import BottomNav from './components/BottomNav';
 import CharacterManager from './components/CharacterManager';
 import ScenarioManager from './components/ScenarioManager';
@@ -13,10 +12,8 @@ import { generateUUID } from './utils';
 
 const App: React.FC = () => {
   const [view, setView] = useState<View>(View.Scenarios);
-
   const [characters, setCharacters] = useState<Character[]>(PRESET_CHARACTERS);
   const [scenarios, setScenarios] = useState<Scenario[]>(PRESET_SCENARIOS);
-  
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Map<string, Message[]>>(new Map());
 
@@ -26,38 +23,38 @@ const App: React.FC = () => {
   };
 
   const handleStartDirectChat = (characterId: string) => {
-      const character = characters.find(c => c.id === characterId);
-      if (!character) return;
+    const character = characters.find(c => c.id === characterId);
+    if (!character) return;
 
-      const existingScenario = scenarios.find(s => 
-          s.characterIds.length === 1 && 
-          s.characterIds[0] === characterId && 
-          s.name === character.name
-      );
+    const existingScenario = scenarios.find(s => 
+        s.characterIds.length === 1 && 
+        s.characterIds[0] === characterId && 
+        s.name === character.name
+    );
 
-      if (existingScenario) {
-          handleSelectScenario(existingScenario.id);
-      } else {
-          const newScenario: Scenario = {
-              id: `direct_${generateUUID()}`,
-              name: character.name,
-              description: `Direct chat with ${character.name}`,
-              characterIds: [characterId],
-              chatParameters: {
-                  temperature: 0.9,
-                  topK: 40,
-                  topP: 1.0,
-                  maxTokens: 1200,
-                  contextSize: 4096,
-                  repetitionPenalty: 1.1
-              },
-              gradioUrl: '',
-              systemInstruction: `You are ${character.name}. Engage in a direct conversation with the user.`,
-              language: 'English'
-          };
-          setScenarios([...scenarios, newScenario]);
-          handleSelectScenario(newScenario.id);
-      }
+    if (existingScenario) {
+        handleSelectScenario(existingScenario.id);
+    } else {
+        const newScenario: Scenario = {
+            id: `direct_${generateUUID()}`,
+            name: character.name,
+            description: `Direct chat with ${character.name}`,
+            characterIds: [characterId],
+            chatParameters: {
+                temperature: 0.9,
+                topK: 40,
+                topP: 1.0,
+                maxTokens: 1200,
+                contextSize: 4096,
+                repetitionPenalty: 1.1
+            },
+            gradioUrl: '',
+            systemInstruction: `You are ${character.name}. Engage in a direct conversation with the user.`,
+            language: 'English'
+        };
+        setScenarios([...scenarios, newScenario]);
+        handleSelectScenario(newScenario.id);
+    }
   };
   
   const addMessage = useCallback((scenarioId: string, message: Message) => {
@@ -127,17 +124,12 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-black text-gray-100 font-sans">
-      <div className="hidden md:flex">
-        <Sidebar view={view} setView={setView} />
-      </div>
-      <div className="flex flex-col flex-1 h-screen overflow-hidden">
-        <main className="flex-1 overflow-y-auto">
-          {renderView()}
-        </main>
-        <div className="md:hidden">
-            <BottomNav view={view} setView={setView} />
-        </div>
+    <div className="flex flex-col h-[100dvh] bg-black text-gray-100 font-sans overflow-hidden">
+      <main className="flex-1 overflow-hidden relative">
+        {renderView()}
+      </main>
+      <div className="shrink-0 border-t border-white/5 pb-[env(safe-area-inset-bottom)] bg-gray-950">
+        <BottomNav view={view} setView={setView} />
       </div>
     </div>
   );
