@@ -10,6 +10,7 @@ import Modal from './Modal';
 interface ChatViewProps {
   scenario: Scenario;
   characters: Character[];
+  allCharacters: Character[]; // Passed for managing the cast
   messages: Message[];
   addMessage: (message: Message) => void;
   updateMessage: (id: string, updates: Partial<Message>) => void;
@@ -27,6 +28,7 @@ const SparkleIcon: React.FC<{ className?: string }> = ({ className }) => (
 const ChatView: React.FC<ChatViewProps> = ({
   scenario,
   characters,
+  allCharacters,
   messages,
   addMessage,
   updateMessage,
@@ -57,6 +59,13 @@ const ChatView: React.FC<ChatViewProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Ensure turnIndex is valid if characters are removed
+  useEffect(() => {
+    if (characters.length > 0 && turnIndex >= characters.length) {
+        setTurnIndex(0);
+    }
+  }, [characters.length, turnIndex]);
 
   const handleImageGeneration = async (isManual: boolean = false) => {
     if (!scenario.imageGradioUrl || isGeneratingImage) return;
@@ -147,7 +156,7 @@ const ChatView: React.FC<ChatViewProps> = ({
         addMessage({ id: generateUUID(), sender: MessageSender.Character, characterId: character.id, text: `❌ AI Turn Error. Check connection.`, timestamp: new Date().toISOString() });
     } finally {
         setIsAiTurn(false);
-        if (characters.length > 1) setTurnIndex(prev => (prev + 1) % characters.length);
+        if (characters.length > 0) setTurnIndex(prev => (prev + 1) % characters.length);
     }
   }, [addMessage, characters, scenario, removeMessage, updateScenario]);
   
@@ -173,7 +182,7 @@ const ChatView: React.FC<ChatViewProps> = ({
     }
   };
 
-  const getCharacter = (id: string) => characters.find(c => c.id === id);
+  const getCharacter = (id: string) => characters.find(c => c.id === id) || allCharacters.find(c => c.id === id);
   const bgOpacity = scenario.backgroundOpacity !== undefined ? scenario.backgroundOpacity / 100 : 0.15;
   const bgBlur = scenario.backgroundBlur !== undefined ? scenario.backgroundBlur : 10;
 
@@ -201,6 +210,11 @@ const ChatView: React.FC<ChatViewProps> = ({
                     <img src={char.avatar} alt={char.name} className="w-8 h-8 rounded-full object-cover border-2 border-black shadow-lg" />
                 </div>
             ))}
+            {characters.length > 3 && (
+                <div className="relative z-10 w-8 h-8 rounded-full bg-zinc-800 border-2 border-black flex items-center justify-center text-[9px] font-bold text-zinc-400">
+                    +{characters.length - 3}
+                </div>
+            )}
         </div>
         
         <button onClick={() => setIsSettingsOpen(true)} className="text-gray-400 hover:text-white transition p-2 rounded-full shrink-0 ml-1 active:scale-90"><SettingsIcon className="w-6 h-6" /></button>
@@ -242,7 +256,12 @@ const ChatView: React.FC<ChatViewProps> = ({
       </div>
 
       <Modal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} title={`System Tuning`}>
-          <ScenarioSettingsEditor scenario={scenario} updateScenario={updateScenario} onClose={() => setIsSettingsOpen(false)} />
+          <ScenarioSettingsEditor 
+            scenario={scenario} 
+            allCharacters={allCharacters}
+            updateScenario={updateScenario} 
+            onClose={() => setIsSettingsOpen(false)} 
+          />
       </Modal>
     </div>
   );
@@ -287,7 +306,7 @@ const ChatMessage: React.FC<{ message: Message, getCharacter: (id: string) => Ch
     );
 };
 
-const ScenarioSettingsEditor: React.FC<{ scenario: Scenario, updateScenario: (s: Scenario) => void, onClose: () => void }> = ({ scenario, updateScenario, onClose }) => {
+const ScenarioSettingsEditor: React.FC<{ scenario: Scenario, allCharacters: Character[], updateScenario: (s: Scenario) => void, onClose: () => void }> = ({ scenario, allCharacters, updateScenario, onClose }) => {
     const [formData, setFormData] = useState<Scenario>(scenario);
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => { 
@@ -308,8 +327,54 @@ const ScenarioSettingsEditor: React.FC<{ scenario: Scenario, updateScenario: (s:
         });
     };
 
+    const handleCharacterToggle = (charId: string) => {
+        setFormData(prev => {
+            const characterIds = prev.characterIds.includes(charId)
+                ? prev.characterIds.filter(id => id !== charId)
+                : [...prev.characterIds, charId];
+            return { ...prev, characterIds };
+        });
+    };
+
     return (
         <div className="space-y-6 pb-32">
+             <div className="p-4 bg-zinc-900 rounded-2xl border border-white/10 shadow-inner space-y-5">
+                <h3 className="text-[10px] font-black uppercase tracking-widest text-teal-500">Active Cast</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {allCharacters.map(char => {
+                        const isSelected = formData.characterIds.includes(char.id);
+                        const isVideo = char.avatar.endsWith('.mp4') || char.avatar.endsWith('.webm');
+                        return (
+                            <button
+                                key={char.id}
+                                type="button"
+                                onClick={() => handleCharacterToggle(char.id)}
+                                className={`relative flex items-center gap-3 p-2 rounded-xl border transition-all group overflow-hidden ${
+                                    isSelected 
+                                    ? 'bg-teal-900/20 border-teal-500/50' 
+                                    : 'bg-black/40 border-white/5 hover:border-white/20'
+                                }`}
+                            >
+                                <div className="relative shrink-0 w-8 h-8 rounded-full overflow-hidden border border-white/10">
+                                    {isVideo ? (
+                                        <video src={char.avatar} className="w-full h-full object-cover" autoPlay loop muted playsInline />
+                                    ) : (
+                                        <img src={char.avatar} alt={char.name} className="w-full h-full object-cover" />
+                                    )}
+                                </div>
+                                
+                                <div className="flex-1 text-left min-w-0">
+                                    <div className={`text-[10px] font-black uppercase tracking-widest truncate ${isSelected ? 'text-white' : 'text-zinc-500'}`}>
+                                        {char.name}
+                                    </div>
+                                </div>
+                                {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-teal-500 mr-2" />}
+                            </button>
+                        )
+                    })}
+                </div>
+            </div>
+
             <div className="p-4 bg-zinc-900 rounded-2xl border border-white/10 shadow-inner space-y-5">
                 <h3 className="text-[10px] font-black uppercase tracking-widest text-teal-500">Neural Gateways</h3>
                 <div>

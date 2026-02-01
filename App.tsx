@@ -119,6 +119,7 @@ const App: React.FC = () => {
             scenario={activeScenario}
             updateScenario={updateScenario}
             characters={activeCharacters}
+            allCharacters={characters}
             messages={messages.get(activeScenario.id) || []}
             addMessage={(message) => addMessage(activeScenario.id, message)}
             updateMessage={(id, updates) => updateMessage(activeScenario.id, id, updates)}

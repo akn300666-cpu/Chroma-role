@@ -155,6 +155,52 @@ const ScenarioForm: React.FC<{ scenario: Scenario, allCharacters: Character[], o
                 <TextAreaField label="World Narrative" name="description" value={formData.description} onChange={handleChange} rows={2} required />
                 
                 <div className="p-5 bg-zinc-900/50 rounded-3xl border border-white/5">
+                    <h3 className="text-sm font-black text-teal-500 uppercase tracking-widest mb-6">Active Cast</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {allCharacters.map(char => {
+                            const isSelected = formData.characterIds.includes(char.id);
+                            const isVideo = char.avatar.endsWith('.mp4') || char.avatar.endsWith('.webm');
+                            
+                            return (
+                                <button
+                                    key={char.id}
+                                    type="button"
+                                    onClick={() => handleCharacterToggle(char.id)}
+                                    className={`relative flex items-center gap-4 p-3 rounded-2xl border transition-all group overflow-hidden ${
+                                        isSelected 
+                                        ? 'bg-teal-900/20 border-teal-500/50 shadow-[0_0_30px_rgba(20,184,166,0.1)]' 
+                                        : 'bg-black/40 border-white/5 hover:border-white/20'
+                                    }`}
+                                >
+                                   <div className="relative shrink-0 w-10 h-10 rounded-full overflow-hidden border border-white/10">
+                                        {isVideo ? (
+                                           <video src={char.avatar} className="w-full h-full object-cover" autoPlay loop muted playsInline />
+                                        ) : (
+                                           <img src={char.avatar} alt={char.name} className="w-full h-full object-cover" />
+                                        )}
+                                   </div>
+                                   
+                                   <div className="flex-1 text-left min-w-0">
+                                       <div className={`text-xs font-black uppercase tracking-widest truncate ${isSelected ? 'text-white' : 'text-zinc-500 group-hover:text-zinc-300'}`}>
+                                           {char.name}
+                                       </div>
+                                   </div>
+
+                                   {isSelected && (
+                                       <div className="w-2 h-2 rounded-full bg-teal-500 shadow-[0_0_10px_#14b8a6] mr-2 animate-pulse" />
+                                   )}
+                                </button>
+                            )
+                        })}
+                         {allCharacters.length === 0 && (
+                            <div className="col-span-full text-center py-4 text-zinc-600 text-xs uppercase tracking-widest">
+                                No personas available.
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="p-5 bg-zinc-900/50 rounded-3xl border border-white/5">
                     <h3 className="text-sm font-black text-teal-500 uppercase tracking-widest mb-6">Neural Access</h3>
                     <div className="space-y-5">
                       <InputField label="Chat LLM URL (LLM)" name="gradioUrl" value={formData.gradioUrl || ''} onChange={handleChange} placeholder="https://xxx-chat.loca.lt" />
