@@ -37,14 +37,30 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ scenarios, setScenari
         contextSize: 4096,
         repetitionPenalty: 1.1
       },
+      imageParameters: {
+        negativePrompt: "bad anatomy, blurry, low quality, distorted face, extra limbs",
+        ipScale: 0.6,
+        guidanceScale: 5.0,
+        steps: 30,
+        seed: 42,
+        randomizeSeed: true,
+        useLlm: true,
+        llmTemperature: 0.7,
+        useEmbedding: true
+      },
       systemInstruction: 'Describe the setting and dynamic.',
       language: 'English',
       memory: '',
+      baseMemories: [],
+      coreMemories: [],
       backgroundImageUrl: '',
       backgroundOpacity: 15,
       backgroundBlur: 10,
       userPersona: '',
       gradioUrl: '',
+      imageGradioUrl: '',
+      modelId: '',
+      tunnelPassword: '',
     });
   };
 
@@ -53,8 +69,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ scenarios, setScenari
   }
 
   return (
-    <div className="p-4 h-full overflow-y-auto bg-black pb-24">
-      <div className="flex justify-between items-center mb-10 pt-[env(safe-area-inset-top)]">
+    <div className="p-4 h-full overflow-y-auto bg-black pb-24 pt-[env(safe-area-inset-top)]">
+      <div className="flex justify-between items-center mb-10">
         <div>
            <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Worlds</h2>
            <p className="text-zinc-500 text-[10px] tracking-[0.3em] mt-1">SCENARIO ARCHIVE</p>
@@ -106,26 +122,11 @@ const ScenarioForm: React.FC<{ scenario: Scenario, allCharacters: Character[], o
     const [formData, setFormData] = useState<Scenario>(scenario);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value as any }));
+        const { name, value, type } = e.target;
+        const val = type === 'number' ? parseFloat(value) : value;
+        setFormData(prev => ({ ...prev, [name]: val }));
     };
 
-    const handleParamChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ 
-            ...prev, 
-            chatParameters: {
-                ...prev.chatParameters,
-                [name]: parseFloat(value)
-            }
-        }));
-    };
-
-    const handleVisualChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: parseFloat(value) }));
-    };
-    
     const handleCharacterToggle = (charId: string) => {
         setFormData(prev => {
             const characterIds = prev.characterIds.includes(charId)
@@ -146,61 +147,61 @@ const ScenarioForm: React.FC<{ scenario: Scenario, allCharacters: Character[], o
                 <button onClick={onCancel} className="p-2 text-zinc-500 hover:text-white transition rounded-full hover:bg-white/5 active:scale-90">
                     <PlusIcon className="w-8 h-8 rotate-45" />
                 </button>
-                <h2 className="text-3xl font-black text-white uppercase tracking-tighter">New World</h2>
+                <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Engine Gate</h2>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
-                <InputField label="World Name" name="name" value={formData.name} onChange={handleChange} required />
-                <TextAreaField label="Premise Hook" name="description" value={formData.description} onChange={handleChange} rows={2} required />
+                <InputField label="Scenario Name" name="name" value={formData.name} onChange={handleChange} required />
+                <TextAreaField label="World Narrative" name="description" value={formData.description} onChange={handleChange} rows={2} required />
                 
                 <div className="p-5 bg-zinc-900/50 rounded-3xl border border-white/5">
-                    <h3 className="text-sm font-black text-teal-500 uppercase tracking-widest mb-6">Engine Link</h3>
-                    <InputField 
-                        label="Endpoint URL" 
-                        name="gradioUrl" 
-                        value={formData.gradioUrl || ''} 
-                        onChange={handleChange} 
-                        placeholder="https://xxxxx.loca.lt/v1"
-                    />
-                </div>
-
-                <div className="p-5 bg-zinc-900/50 rounded-3xl border border-white/5">
-                    <h3 className="text-sm font-black text-teal-500 uppercase tracking-widest mb-6">Visual Ambience</h3>
-                    <div className="space-y-6">
-                        <InputField label="Background Image URL" name="backgroundImageUrl" value={formData.backgroundImageUrl || ''} onChange={handleChange} />
-                        <Slider label="Background Opacity" name="backgroundOpacity" value={formData.backgroundOpacity ?? 15} min={0} max={100} step={1} onChange={handleVisualChange} unit="%" />
-                        <Slider label="Background Blur" name="backgroundBlur" value={formData.backgroundBlur ?? 10} min={0} max={40} step={1} onChange={handleVisualChange} unit="px" />
-                    </div>
-                </div>
-
-                <div>
-                    <label className="block text-[10px] font-black uppercase text-zinc-500 mb-4 tracking-widest ml-1">The Cast</label>
-                    <div className="grid grid-cols-3 gap-3 p-4 bg-zinc-900/30 rounded-3xl border border-white/5">
-                        {allCharacters.map(char => {
-                            const isSelected = formData.characterIds.includes(char.id);
-                            return (
-                                <div key={char.id} onClick={() => handleCharacterToggle(char.id)} className={`cursor-pointer p-3 rounded-2xl text-center transition-all active:scale-95 ${isSelected ? 'bg-teal-600 shadow-lg shadow-teal-900/40' : 'bg-black/40'}`}>
-                                    <img src={char.avatar} alt={char.name} className="w-12 h-12 rounded-full mx-auto mb-2 object-cover border-2 border-black shadow-md"/>
-                                    <span className="text-[10px] font-black uppercase tracking-tight text-white block truncate">{char.name}</span>
-                                </div>
-                            );
-                        })}
+                    <h3 className="text-sm font-black text-teal-500 uppercase tracking-widest mb-6">Neural Access</h3>
+                    <div className="space-y-5">
+                      <InputField label="Chat LLM URL (LLM)" name="gradioUrl" value={formData.gradioUrl || ''} onChange={handleChange} placeholder="https://xxx-chat.loca.lt" />
+                      <InputField label="Image Gen URL (Flask)" name="imageGradioUrl" value={formData.imageGradioUrl || ''} onChange={handleChange} placeholder="https://xxx.loca.lt" />
+                      <InputField label="Model Path" name="modelId" value={formData.modelId || ''} onChange={handleChange} placeholder="e.g. Meta-Llama-3-8B" />
                     </div>
                 </div>
 
                 <div className="p-5 bg-zinc-900/50 rounded-3xl border border-white/5">
-                    <h3 className="text-sm font-black text-teal-500 uppercase tracking-widest mb-6">Core Directives</h3>
-                    <TextAreaField label="Setting Instruction" name="systemInstruction" value={formData.systemInstruction} onChange={handleChange} rows={4} />
-                    <div className="mt-8 space-y-7">
-                        <h4 className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.3em]">Neural Tuning</h4>
-                        <Slider label="Temperature" name="temperature" value={formData.chatParameters.temperature} min={0} max={2} step={0.05} onChange={handleParamChange} />
-                        <Slider label="Max Tokens" name="maxTokens" value={formData.chatParameters.maxTokens} min={128} max={4096} step={128} onChange={handleParamChange} />
+                    <h3 className="text-sm font-black text-teal-500 uppercase tracking-widest mb-6">World & Memory</h3>
+                    <div className="space-y-5">
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Permanent Memory</label>
+                        <TextAreaField label="" name="memory" value={formData.memory || ''} onChange={handleChange} rows={4} placeholder="Important facts, past events, or specific rules..." />
+                        
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Core Memories ({formData.coreMemories?.length || 0}/10)</label>
+                        <div className="space-y-2 max-h-40 overflow-y-auto p-2 bg-black/40 rounded-xl border border-white/5 custom-scrollbar">
+                            {formData.coreMemories?.map((m, i) => (
+                                <div key={i} className="text-[10px] text-zinc-400 p-2 bg-white/5 rounded-lg border border-white/5">{m}</div>
+                            ))}
+                            {!formData.coreMemories?.length && <span className="text-zinc-600 text-[10px] pl-2">No core memories yet.</span>}
+                        </div>
+
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Base Memories ({formData.baseMemories?.length || 0}/10)</label>
+                        <div className="space-y-2 max-h-40 overflow-y-auto p-2 bg-black/40 rounded-xl border border-white/5 custom-scrollbar">
+                            {formData.baseMemories?.map((m, i) => (
+                                <div key={i} className="text-[10px] text-zinc-400 p-2 bg-white/5 rounded-lg border border-white/5">{m}</div>
+                            ))}
+                            {!formData.baseMemories?.length && <span className="text-zinc-600 text-[10px] pl-2">No base memories yet.</span>}
+                        </div>
+
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1 mt-4">Visual Atmosphere</label>
+                        <InputField label="" name="backgroundImageUrl" value={formData.backgroundImageUrl || ''} onChange={handleChange} placeholder="https://..." />
+                        <div className="grid grid-cols-2 gap-4">
+                            <InputField label="Opacity (%)" name="backgroundOpacity" value={formData.backgroundOpacity?.toString() || '15'} onChange={handleChange} type="number" />
+                            <InputField label="Blur (px)" name="backgroundBlur" value={formData.backgroundBlur?.toString() || '10'} onChange={handleChange} type="number" />
+                        </div>
                     </div>
+                </div>
+
+                <div className="p-5 bg-zinc-900/50 rounded-3xl border border-white/5">
+                    <h3 className="text-sm font-black text-teal-500 uppercase tracking-widest mb-6">Persona Anchor</h3>
+                    <TextAreaField label="User Identity" name="userPersona" value={formData.userPersona || ''} onChange={handleChange} rows={3} placeholder="Describe your character traits..." />
                 </div>
 
                 <div className="flex gap-4 pt-4 mb-20">
-                    <button type="button" onClick={onCancel} className="flex-1 bg-white/5 text-zinc-400 font-black py-5 rounded-3xl text-[10px] tracking-widest uppercase">Discard</button>
-                    <button type="submit" className="flex-1 bg-teal-600 text-white font-black py-5 rounded-3xl text-[10px] tracking-widest uppercase shadow-2xl shadow-teal-900/40">Manifest</button>
+                    <button type="button" onClick={onCancel} className="flex-1 bg-white/5 text-zinc-400 font-black py-5 rounded-3xl text-[10px] uppercase">Discard</button>
+                    <button type="submit" className="flex-1 bg-teal-600 text-white font-black py-5 rounded-3xl text-[10px] uppercase shadow-xl shadow-teal-900/30">Commit Engine</button>
                 </div>
             </form>
         </div>
@@ -208,8 +209,8 @@ const ScenarioForm: React.FC<{ scenario: Scenario, allCharacters: Character[], o
 };
 
 const InputField: React.FC<{label: string, name: string, value: string, onChange: any, required?: boolean, placeholder?: string, type?: string}> = ({ label, name, value, onChange, required, placeholder, type="text" }) => (
-    <div className="w-full">
-        <label htmlFor={name} className="block text-[10px] font-black uppercase text-zinc-500 mb-2 tracking-widest ml-1">{label}</label>
+    <div className="w-full text-left">
+        {label && <label htmlFor={name} className="block text-[10px] font-black uppercase text-zinc-500 mb-2 tracking-widest ml-1">{label}</label>}
         <input
             type={type}
             id={name}
@@ -224,8 +225,8 @@ const InputField: React.FC<{label: string, name: string, value: string, onChange
 );
 
 const TextAreaField: React.FC<{label: string, name: string, value: string, onChange: any, required?: boolean, rows?: number, placeholder?: string}> = ({ label, name, value, onChange, required, rows=3, placeholder }) => (
-    <div className="w-full">
-        <label htmlFor={name} className="block text-[10px] font-black uppercase text-zinc-500 mb-2 tracking-widest ml-1">{label}</label>
+    <div className="w-full text-left">
+        {label && <label htmlFor={name} className="block text-[10px] font-black uppercase text-zinc-500 mb-2 tracking-widest ml-1">{label}</label>}
         <textarea
             id={name}
             name={name}
@@ -234,18 +235,8 @@ const TextAreaField: React.FC<{label: string, name: string, value: string, onCha
             required={required}
             rows={rows}
             placeholder={placeholder}
-            className="w-full bg-black/40 border border-white/5 text-white rounded-2xl px-5 py-4 outline-none focus:border-teal-500 transition custom-scrollbar shadow-inner text-sm"
+            className="w-full bg-black/40 border border-white/5 text-white rounded-2xl px-5 py-4 outline-none focus:border-teal-500 transition shadow-inner text-sm"
         />
-    </div>
-);
-
-const Slider: React.FC<{label: string, name: string, value: number, min: number, max: number, step: number, unit?: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;}> = ({ label, name, value, min, max, step, unit = "", onChange }) => (
-    <div className="w-full">
-        <label htmlFor={name} className="flex justify-between items-center text-[10px] font-black uppercase text-zinc-500 mb-3 tracking-widest ml-1">
-            <span>{label}</span>
-            <span className="font-bold text-teal-500">{value}{unit}</span>
-        </label>
-        <input type="range" id={name} name={name} min={min} max={max} step={step} value={value} onChange={onChange} className="w-full h-1.5 bg-black rounded-lg appearance-none cursor-pointer accent-teal-500" />
     </div>
 );
 

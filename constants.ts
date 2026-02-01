@@ -59,6 +59,17 @@ export const PRESET_SCENARIOS: Scenario[] = [
       contextSize: 4096,
       repetitionPenalty: 1.1
     },
+    imageParameters: {
+      negativePrompt: "bad anatomy, blurry, low quality, distorted face, extra limbs",
+      ipScale: 0.6,
+      guidanceScale: 5.0,
+      steps: 30,
+      seed: 42,
+      randomizeSeed: true,
+      useLlm: true,
+      llmTemperature: 0.7,
+      useEmbedding: true
+    },
     systemInstruction: 'The setting is a comfortable living room with soft lighting. Eve is sitting on the couch, looking relaxed. The vibe is chill and conversational. REMINDER: Include evocative narrations and describe your movements to bring the scene to life.',
     language: 'English',
     userPersona: '',

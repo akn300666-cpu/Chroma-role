@@ -48,6 +48,18 @@ const App: React.FC = () => {
                 contextSize: 4096,
                 repetitionPenalty: 1.1
             },
+            // Added missing required imageParameters property to satisfy Scenario interface
+            imageParameters: {
+                negativePrompt: "bad anatomy, blurry, low quality, distorted face, extra limbs",
+                ipScale: 0.6,
+                guidanceScale: 5.0,
+                steps: 30,
+                seed: 42,
+                randomizeSeed: true,
+                useLlm: true,
+                llmTemperature: 0.7,
+                useEmbedding: true
+            },
             gradioUrl: '',
             systemInstruction: `You are ${character.name}. Engage in a direct conversation with the user.`,
             language: 'English'
