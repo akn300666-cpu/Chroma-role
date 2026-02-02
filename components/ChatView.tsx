@@ -25,6 +25,25 @@ const SparkleIcon: React.FC<{ className?: string }> = ({ className }) => (
     </svg>
 );
 
+// Fullscreen Image Overlay Component
+interface FullscreenOverlayProps {
+    src: string;
+    onClose: () => void;
+}
+
+const FullscreenOverlay: React.FC<FullscreenOverlayProps> = ({ src, onClose }) => {
+    return (
+        <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={onClose}>
+             <button onClick={onClose} className="absolute top-4 right-4 text-white/50 hover:text-white p-2 z-[210]">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+             </button>
+             <img src={src} className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-zoom-out" onClick={(e) => e.stopPropagation()} />
+        </div>
+    );
+};
+
 const ChatView: React.FC<ChatViewProps> = ({
   scenario,
   characters,
@@ -41,6 +60,7 @@ const ChatView: React.FC<ChatViewProps> = ({
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [turnIndex, setTurnIndex] = useState(0);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageCounter = useRef<number>(0);
@@ -194,6 +214,8 @@ const ChatView: React.FC<ChatViewProps> = ({
              <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black" />
           </div>
       )}
+      
+      {fullscreenImage && <FullscreenOverlay src={fullscreenImage} onClose={() => setFullscreenImage(null)} />}
 
       <header className="relative z-20 flex justify-between items-center px-4 h-16 bg-black/70 backdrop-blur-2xl border-b border-white/5 shadow-2xl shrink-0 pt-[env(safe-area-inset-top)]">
         <div className="flex items-center gap-2 overflow-hidden">
@@ -223,7 +245,7 @@ const ChatView: React.FC<ChatViewProps> = ({
       <div className="flex-1 overflow-y-auto px-4 py-6 pb-28 relative z-10 custom-scrollbar">
         <div className="w-full space-y-6">
             {messages.map((msg) => (
-              <ChatMessage key={msg.id} message={msg} getCharacter={getCharacter} />
+              <ChatMessage key={msg.id} message={msg} getCharacter={getCharacter} onImageClick={setFullscreenImage} />
             ))}
             <div ref={messagesEndRef} />
         </div>
@@ -267,7 +289,7 @@ const ChatView: React.FC<ChatViewProps> = ({
   );
 };
 
-const ChatMessage: React.FC<{ message: Message, getCharacter: (id: string) => Character | undefined }> = ({ message, getCharacter }) => {
+const ChatMessage: React.FC<{ message: Message, getCharacter: (id: string) => Character | undefined, onImageClick?: (url: string) => void }> = ({ message, getCharacter, onImageClick }) => {
     const isUser = message.sender === MessageSender.User;
     const isSystem = message.sender === MessageSender.System;
     const character = !isUser && !isSystem && message.characterId ? getCharacter(message.characterId) : null;
@@ -275,14 +297,19 @@ const ChatMessage: React.FC<{ message: Message, getCharacter: (id: string) => Ch
     if (isSystem && (message.imageUrl || message.isImageLoading)) {
         return (
             <div className="flex flex-col items-center my-8 animate-in fade-in zoom-in duration-500">
-                <div className="relative w-full max-w-sm rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-zinc-900/40 backdrop-blur-sm aspect-square flex items-center justify-center">
+                <div className="relative w-full max-w-sm rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl bg-zinc-900/40 backdrop-blur-sm aspect-[3/4] flex items-center justify-center">
                     {message.isImageLoading ? (
                         <div className="flex flex-col items-center gap-4">
                             <div className="w-12 h-12 border-4 border-teal-500/20 border-t-teal-500 rounded-full animate-spin"></div>
                             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 animate-pulse">Synthesizing Vision</span>
                         </div>
                     ) : (
-                        <img src={message.imageUrl} alt="Generated Scene" className="w-full h-full object-cover" />
+                        <img 
+                            src={message.imageUrl} 
+                            alt="Generated Scene" 
+                            className="w-full h-full object-cover cursor-zoom-in active:scale-95 transition-transform"
+                            onClick={() => message.imageUrl && onImageClick?.(message.imageUrl)}
+                        />
                     )}
                 </div>
                 <div className="mt-4 px-6 py-2 bg-white/5 rounded-full border border-white/5">

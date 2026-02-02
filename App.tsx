@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import type { Character, Scenario, Message } from './types';
 import { View } from './types';
 import BottomNav from './components/BottomNav';
@@ -12,10 +12,62 @@ import { generateUUID } from './utils';
 
 const App: React.FC = () => {
   const [view, setView] = useState<View>(View.Scenarios);
-  const [characters, setCharacters] = useState<Character[]>(PRESET_CHARACTERS);
-  const [scenarios, setScenarios] = useState<Scenario[]>(PRESET_SCENARIOS);
   const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Map<string, Message[]>>(new Map());
+
+  // --- Persistence Initialization ---
+  
+  const [characters, setCharacters] = useState<Character[]>(() => {
+    try {
+      const saved = localStorage.getItem('chroma_characters');
+      return saved ? JSON.parse(saved) : PRESET_CHARACTERS;
+    } catch (e) {
+      console.error("Failed to load characters", e);
+      return PRESET_CHARACTERS;
+    }
+  });
+
+  const [scenarios, setScenarios] = useState<Scenario[]>(() => {
+    try {
+      const saved = localStorage.getItem('chroma_scenarios');
+      return saved ? JSON.parse(saved) : PRESET_SCENARIOS;
+    } catch (e) {
+      console.error("Failed to load scenarios", e);
+      return PRESET_SCENARIOS;
+    }
+  });
+
+  const [messages, setMessages] = useState<Map<string, Message[]>>(() => {
+    try {
+      const saved = localStorage.getItem('chroma_messages');
+      if (saved) {
+        return new Map(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error("Failed to load messages", e);
+    }
+    return new Map();
+  });
+
+  // --- Persistence Effects ---
+
+  useEffect(() => {
+    localStorage.setItem('chroma_characters', JSON.stringify(characters));
+  }, [characters]);
+
+  useEffect(() => {
+    localStorage.setItem('chroma_scenarios', JSON.stringify(scenarios));
+  }, [scenarios]);
+
+  useEffect(() => {
+    try {
+      // Convert Map to Array of entries for JSON storage
+      const serialized = JSON.stringify(Array.from(messages.entries()));
+      localStorage.setItem('chroma_messages', serialized);
+    } catch (e) {
+      console.error("Failed to save messages (Storage Quota might be full)", e);
+    }
+  }, [messages]);
+
 
   const handleSelectScenario = (scenarioId: string) => {
     setActiveScenarioId(scenarioId);
@@ -48,7 +100,6 @@ const App: React.FC = () => {
                 contextSize: 4096,
                 repetitionPenalty: 1.1
             },
-            // Added missing required imageParameters property to satisfy Scenario interface
             imageParameters: {
                 negativePrompt: "bad anatomy, blurry, low quality, distorted face, extra limbs",
                 ipScale: 0.6,
